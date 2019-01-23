@@ -77,6 +77,7 @@ type (
 		Archived bool   `json:"archived,omitempty"`
 		Color    string `json:"color,omitempty"`
 		Notes    string `json:"notes,omitempty"`
+		Public   bool   `json:"public,omitempty"`
 		Team     Team   `json:"team,omitempty"`
 	}
 
@@ -89,7 +90,6 @@ type (
 		Completed      bool      `json:"completed,omitempty"`
 		CompletedAt    time.Time `json:"completed_at,omitempty"`
 		ModifiedAt     time.Time `json:"modified_at,omitempty"`
-		Public         bool      `json:"public,omitempty"`
 		Name           string    `json:"name,omitempty"`
 		Hearts         []Heart   `json:"hearts,omitempty"`
 		Notes          string    `json:"notes,omitempty"`
@@ -272,12 +272,13 @@ func (c *Client) request(ctx context.Context, method string, path string, data i
 	if opt == nil {
 		opt = &Filter{}
 	}
-	if len(opt.OptFields) == 0 {
-		// We should not modify opt provided to Request.
-		newOpt := *opt
-		opt = &newOpt
-		opt.OptFields = defaultOptFields[path]
-	}
+	// no need
+	// if len(opt.OptFields) == 0 {
+	// 	// We should not modify opt provided to Request.
+	// 	newOpt := *opt
+	// 	opt = &newOpt
+	// 	opt.OptFields = defaultOptFields[path]
+	// }
 	urlStr, err := addOptions(path, opt)
 	if err != nil {
 		return err
