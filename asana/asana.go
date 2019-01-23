@@ -66,12 +66,18 @@ type (
 		Workspaces []Workspace       `json:"workspaces,omitempty"`
 	}
 
+	Team struct {
+		ID   int64  `json:"id,omitempty"`
+		Name string `json:"name,omitempty"`
+	}
+
 	Project struct {
 		ID       int64  `json:"id,omitempty"`
 		Name     string `json:"name,omitempty"`
 		Archived bool   `json:"archived,omitempty"`
 		Color    string `json:"color,omitempty"`
 		Notes    string `json:"notes,omitempty"`
+		Team     Team   `json:"team,omitempty"`
 	}
 
 	Task struct {
@@ -81,6 +87,9 @@ type (
 		CreatedAt      time.Time `json:"created_at,omitempty"`
 		CreatedBy      User      `json:"created_by,omitempty"` // Undocumented field, but it can be included.
 		Completed      bool      `json:"completed,omitempty"`
+		CompletedAt    time.Time `json:"completed_at,omitempty"`
+		ModifiedAt     time.Time `json:"modified_at,omitempty"`
+		Public         bool      `json:"public,omitempty"`
 		Name           string    `json:"name,omitempty"`
 		Hearts         []Heart   `json:"hearts,omitempty"`
 		Notes          string    `json:"notes,omitempty"`
