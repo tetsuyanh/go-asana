@@ -103,8 +103,8 @@ type (
 	}
 
 	Membership struct {
-		Project Project `json:"project,omitempty"`
-		Section Section `json:"section,omitempty"`
+		Project Project  `json:"project,omitempty"`
+		Section *Section `json:"section,omitempty"`
 	}
 
 	Task struct {
