@@ -98,21 +98,31 @@ type (
 		Team     Team   `json:"team,omitempty"`
 	}
 
+	Section struct {
+		Base
+	}
+
+	Membership struct {
+		Project Project `json:"project,omitempty"`
+		Section Section `json:"section,omitempty"`
+	}
+
 	Task struct {
 		Base
-		Assignee       *User     `json:"assignee,omitempty"`
-		AssigneeStatus string    `json:"assignee_status,omitempty"`
-		CreatedAt      time.Time `json:"created_at,omitempty"`
-		CreatedBy      User      `json:"created_by,omitempty"` // Undocumented field, but it can be included.
-		Completed      bool      `json:"completed,omitempty"`
-		CompletedAt    time.Time `json:"completed_at,omitempty"`
-		ModifiedAt     time.Time `json:"modified_at,omitempty"`
-		Hearts         []Heart   `json:"hearts,omitempty"`
-		Notes          string    `json:"notes,omitempty"`
-		ParentTask     *Task     `json:"parent,omitempty"`
-		Projects       []Project `json:"projects,omitempty"`
-		DueOn          string    `json:"due_on,omitempty"`
-		DueAt          string    `json:"due_at,omitempty"`
+		Assignee       *User        `json:"assignee,omitempty"`
+		AssigneeStatus string       `json:"assignee_status,omitempty"`
+		CreatedAt      time.Time    `json:"created_at,omitempty"`
+		CreatedBy      User         `json:"created_by,omitempty"` // Undocumented field, but it can be included.
+		Completed      bool         `json:"completed,omitempty"`
+		CompletedAt    time.Time    `json:"completed_at,omitempty"`
+		ModifiedAt     time.Time    `json:"modified_at,omitempty"`
+		Memberships    []Membership `json:"memberships,omitempty"`
+		Hearts         []Heart      `json:"hearts,omitempty"`
+		Notes          string       `json:"notes,omitempty"`
+		ParentTask     *Task        `json:"parent,omitempty"`
+		Projects       []Project    `json:"projects,omitempty"`
+		DueOn          string       `json:"due_on,omitempty"`
+		DueAt          string       `json:"due_at,omitempty"`
 	}
 	// TaskUpdate is used to update a task.
 	TaskUpdate struct {
