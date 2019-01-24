@@ -17,9 +17,20 @@ import (
 )
 
 const (
-	libraryVersion = "0.1"
+	libraryVersion = "0.2"
 	userAgent      = "go-asana/" + libraryVersion
 	defaultBaseURL = "https://app.asana.com/api/1.0/"
+)
+
+const (
+	ResourceTypeUser       = "user"
+	ResourceTypeWorkspace  = "workspace"
+	ResourceTypeProject    = "project"
+	ResourceTypeSection    = "section"
+	ResourceTypeTask       = "task"
+	ResourceTypeStory      = "story"
+	ResourceTypeTag        = "tag"
+	ResourceTypeEnumOption = "enum_option"
 )
 
 var defaultOptFields = map[string][]string{
@@ -52,28 +63,34 @@ type (
 		UserAgent string
 	}
 
-	Workspace struct {
-		ID           int64  `json:"id,omitempty"`
+	Base struct {
+		// ID is under active migration to the gid field
+		// see https://asana.com/developers/documentation/getting-started/deprecations
+		// ID           int64  `json:"id,omitempty"`
+		GID          string `json:"gid,omitempty"`
 		Name         string `json:"name,omitempty"`
-		Organization bool   `json:"is_organization,omitempty"`
+		ResourceType string `json:"resource_type,omitempty"`
+	}
+
+	Workspace struct {
+		Base
+		Organization bool `json:"is_organization,omitempty"`
 	}
 
 	User struct {
-		ID         int64             `json:"id,omitempty"`
+		Base
 		Email      string            `json:"email,omitempty"`
-		Name       string            `json:"name,omitempty"`
 		Photo      map[string]string `json:"photo,omitempty"`
 		Workspaces []Workspace       `json:"workspaces,omitempty"`
 	}
 
 	Team struct {
-		ID   int64  `json:"id,omitempty"`
-		Name string `json:"name,omitempty"`
+		Base
+		Workspace Workspace `json:"organization,omitempty"`
 	}
 
 	Project struct {
-		ID       int64  `json:"id,omitempty"`
-		Name     string `json:"name,omitempty"`
+		Base
 		Archived bool   `json:"archived,omitempty"`
 		Color    string `json:"color,omitempty"`
 		Notes    string `json:"notes,omitempty"`
@@ -82,7 +99,7 @@ type (
 	}
 
 	Task struct {
-		ID             int64     `json:"id,omitempty"`
+		Base
 		Assignee       *User     `json:"assignee,omitempty"`
 		AssigneeStatus string    `json:"assignee_status,omitempty"`
 		CreatedAt      time.Time `json:"created_at,omitempty"`
@@ -90,7 +107,6 @@ type (
 		Completed      bool      `json:"completed,omitempty"`
 		CompletedAt    time.Time `json:"completed_at,omitempty"`
 		ModifiedAt     time.Time `json:"modified_at,omitempty"`
-		Name           string    `json:"name,omitempty"`
 		Hearts         []Heart   `json:"hearts,omitempty"`
 		Notes          string    `json:"notes,omitempty"`
 		ParentTask     *Task     `json:"parent,omitempty"`
@@ -105,7 +121,7 @@ type (
 	}
 
 	Story struct {
-		ID        int64     `json:"id,omitempty"`
+		Base
 		CreatedAt time.Time `json:"created_at,omitempty"`
 		CreatedBy User      `json:"created_by,omitempty"`
 		Hearts    []Heart   `json:"hearts,omitempty"`
@@ -115,22 +131,21 @@ type (
 
 	// Heart represents a ♥ action by a user.
 	Heart struct {
-		ID   int64 `json:"id,omitempty"`
-		User User  `json:"user,omitempty"`
+		Base
+		User User `json:"user,omitempty"`
 	}
 
 	Tag struct {
-		ID    int64  `json:"id,omitempty"`
-		Name  string `json:"name,omitempty"`
+		Base
 		Color string `json:"color,omitempty"`
 		Notes string `json:"notes,omitempty"`
 	}
 
 	Filter struct {
 		Archived       bool     `url:"archived,omitempty"`
-		Assignee       int64    `url:"assignee,omitempty"`
-		Project        int64    `url:"project,omitempty"`
-		Workspace      int64    `url:"workspace,omitempty"`
+		Assignee       string   `url:"assignee,omitempty"`
+		Project        string   `url:"project,omitempty"`
+		Workspace      string   `url:"workspace,omitempty"`
 		CompletedSince string   `url:"completed_since,omitempty"`
 		ModifiedSince  string   `url:"modified_since,omitempty"`
 		OptFields      []string `url:"opt_fields,comma,omitempty"`
@@ -206,18 +221,18 @@ func (c *Client) ListTasks(ctx context.Context, opt *Filter) ([]Task, error) {
 	return *tasks, err
 }
 
-func (c *Client) GetTask(ctx context.Context, id int64, opt *Filter) (Task, error) {
+func (c *Client) GetTask(ctx context.Context, gid string, opt *Filter) (Task, error) {
 	task := new(Task)
-	err := c.Request(ctx, fmt.Sprintf("tasks/%d", id), opt, task)
+	err := c.Request(ctx, fmt.Sprintf("tasks/%s", gid), opt, task)
 	return *task, err
 }
 
 // UpdateTask updates a task.
 //
 // https://asana.com/developers/api-reference/tasks#update
-func (c *Client) UpdateTask(ctx context.Context, id int64, tu TaskUpdate, opt *Filter) (Task, error) {
+func (c *Client) UpdateTask(ctx context.Context, gid string, tu TaskUpdate, opt *Filter) (Task, error) {
 	task := new(Task)
-	err := c.request(ctx, "PUT", fmt.Sprintf("tasks/%d", id), tu, nil, opt, task)
+	err := c.request(ctx, "PUT", fmt.Sprintf("tasks/%s", gid), tu, nil, opt, task)
 	return *task, err
 }
 
@@ -230,15 +245,15 @@ func (c *Client) CreateTask(ctx context.Context, fields map[string]string, opts 
 	return *task, err
 }
 
-func (c *Client) ListProjectTasks(ctx context.Context, projectID int64, opt *Filter) ([]Task, error) {
+func (c *Client) ListProjectTasks(ctx context.Context, projectID string, opt *Filter) ([]Task, error) {
 	tasks := new([]Task)
-	err := c.Request(ctx, fmt.Sprintf("projects/%d/tasks", projectID), opt, tasks)
+	err := c.Request(ctx, fmt.Sprintf("projects/%s/tasks", projectID), opt, tasks)
 	return *tasks, err
 }
 
-func (c *Client) ListTaskStories(ctx context.Context, taskID int64, opt *Filter) ([]Story, error) {
+func (c *Client) ListTaskStories(ctx context.Context, taskID string, opt *Filter) ([]Story, error) {
 	stories := new([]Story)
-	err := c.Request(ctx, fmt.Sprintf("tasks/%d/stories", taskID), opt, stories)
+	err := c.Request(ctx, fmt.Sprintf("tasks/%s/stories", taskID), opt, stories)
 	return *stories, err
 }
 
@@ -254,9 +269,9 @@ func (c *Client) GetAuthenticatedUser(ctx context.Context, opt *Filter) (User, e
 	return *user, err
 }
 
-func (c *Client) GetUserByID(ctx context.Context, id int64, opt *Filter) (User, error) {
+func (c *Client) GetUserByID(ctx context.Context, gid string, opt *Filter) (User, error) {
 	user := new(User)
-	err := c.Request(ctx, fmt.Sprintf("users/%d", id), opt, user)
+	err := c.Request(ctx, fmt.Sprintf("users/%s", gid), opt, user)
 	return *user, err
 }
 

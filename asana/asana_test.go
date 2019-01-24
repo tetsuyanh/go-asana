@@ -53,8 +53,8 @@ func TestListWorkspaces(t *testing.T) {
 
 	mux.HandleFunc("/workspaces", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `{"data":[
-			{"id":1,"name":"Organization 1"},
-			{"id":2,"name":"Organization 2"}
+			{"gid":"1","name":"Organization 1","resource_type":"workspace"},
+			{"gid":"2","name":"Organization 2","resource_type":"workspace"}
 		]}`)
 	})
 
@@ -64,8 +64,8 @@ func TestListWorkspaces(t *testing.T) {
 	}
 
 	want := []Workspace{
-		{ID: 1, Name: "Organization 1"},
-		{ID: 2, Name: "Organization 2"},
+		{Base: Base{GID: "1", Name: "Organization 1", ResourceType: ResourceTypeWorkspace}},
+		{Base: Base{GID: "2", Name: "Organization 2", ResourceType: ResourceTypeWorkspace}},
 	}
 
 	if !reflect.DeepEqual(workspaces, want) {
@@ -79,8 +79,8 @@ func TestListUsers(t *testing.T) {
 
 	mux.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `{"data":[
-			{"id":1,"email":"test1@asana.com"},
-			{"id":2,"email":"test2@asana.com"}
+			{"gid":"1","email":"test1@asana.com"},
+			{"gid":"2","email":"test2@asana.com"}
 		]}`)
 	})
 
@@ -90,8 +90,8 @@ func TestListUsers(t *testing.T) {
 	}
 
 	want := []User{
-		{ID: 1, Email: "test1@asana.com"},
-		{ID: 2, Email: "test2@asana.com"},
+		{Base: Base{GID: "1"}, Email: "test1@asana.com"},
+		{Base: Base{GID: "2"}, Email: "test2@asana.com"},
 	}
 
 	if !reflect.DeepEqual(users, want) {
@@ -105,8 +105,8 @@ func TestListProjects(t *testing.T) {
 
 	mux.HandleFunc("/projects", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `{"data":[
-			{"id":1,"name":"Project 1"},
-			{"id":2,"name":"Project 2"}
+			{"gid":"1","name":"Project 1"},
+			{"gid":"2","name":"Project 2"}
 		]}`)
 	})
 
@@ -116,8 +116,8 @@ func TestListProjects(t *testing.T) {
 	}
 
 	want := []Project{
-		{ID: 1, Name: "Project 1"},
-		{ID: 2, Name: "Project 2"},
+		{Base: Base{GID: "1", Name: "Project 1"}},
+		{Base: Base{GID: "2", Name: "Project 2"}},
 	}
 
 	if !reflect.DeepEqual(projects, want) {
@@ -131,8 +131,8 @@ func TestListTasks(t *testing.T) {
 
 	mux.HandleFunc("/tasks", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `{"data":[
-			{"id":1,"name":"Task 1"},
-			{"id":2,"name":"Task 2"}
+			{"gid":"1","name":"Task 1"},
+			{"gid":"2","name":"Task 2"}
 		]}`)
 	})
 
@@ -142,8 +142,8 @@ func TestListTasks(t *testing.T) {
 	}
 
 	want := []Task{
-		{ID: 1, Name: "Task 1"},
-		{ID: 2, Name: "Task 2"},
+		{Base: Base{GID: "1", Name: "Task 1"}},
+		{Base: Base{GID: "2", Name: "Task 2"}},
 	}
 
 	if !reflect.DeepEqual(tasks, want) {
@@ -170,7 +170,7 @@ func TestUpdateTask(t *testing.T) {
 			t.Errorf("handler received request body %+v, want %+v", string(b), want)
 		}
 
-		fmt.Fprint(w, `{"data":{"id":1,"notes":"updated notes"}}`)
+		fmt.Fprint(w, `{"data":{"gid":"1","notes":"updated notes"}}`)
 	})
 
 	// TODO: Add this to package API, like go-github, maybe? Think about it first.
@@ -179,12 +179,12 @@ func TestUpdateTask(t *testing.T) {
 	// to store v and returns a pointer to it.
 	String := func(v string) *string { return &v }
 
-	task, err := client.UpdateTask(context.Background(), 1, TaskUpdate{Notes: String("updated notes")}, nil)
+	task, err := client.UpdateTask(context.Background(), "1", TaskUpdate{Notes: String("updated notes")}, nil)
 	if err != nil {
 		t.Errorf("UpdateTask returned error: %v", err)
 	}
 
-	want := Task{ID: 1, Notes: "updated notes"}
+	want := Task{Base: Base{GID: "1"}, Notes: "updated notes"}
 	if !reflect.DeepEqual(task, want) {
 		t.Errorf("UpdateTask returned %+v, want %+v", task, want)
 	}
@@ -196,8 +196,8 @@ func TestListTags(t *testing.T) {
 
 	mux.HandleFunc("/tags", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `{"data":[
-			{"id":1,"name":"Tag 1"},
-			{"id":2,"name":"Tag 2"}
+			{"gid":"1","name":"Tag 1"},
+			{"gid":"2","name":"Tag 2"}
 		]}`)
 	})
 
@@ -207,8 +207,8 @@ func TestListTags(t *testing.T) {
 	}
 
 	want := []Tag{
-		{ID: 1, Name: "Tag 1"},
-		{ID: 2, Name: "Tag 2"},
+		{Base: Base{GID: "1", Name: "Tag 1"}},
+		{Base: Base{GID: "2", Name: "Tag 2"}},
 	}
 
 	if !reflect.DeepEqual(tags, want) {
@@ -256,7 +256,7 @@ func TestCreateTask(t *testing.T) {
 		if !reflect.DeepEqual(values, want) {
 			t.Errorf("invalid body received %v", values)
 		}
-		fmt.Fprint(w, `{"data":{"id":1,"notes":"updated notes"}}`)
+		fmt.Fprint(w, `{"data":{"gid":"1","notes":"updated notes"}}`)
 	})
 
 	task, err := client.CreateTask(context.Background(), map[string]string{
@@ -268,7 +268,7 @@ func TestCreateTask(t *testing.T) {
 		t.Errorf("CreateTask returned error: %v", err)
 	}
 
-	want := Task{ID: 1, Notes: "updated notes"}
+	want := Task{Base: Base{GID: "1"}, Notes: "updated notes"}
 	if !reflect.DeepEqual(task, want) {
 		t.Errorf("CreateTask returned %+v, want %+v", task, want)
 	}
